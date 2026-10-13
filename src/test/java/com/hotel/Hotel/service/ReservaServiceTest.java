@@ -99,4 +99,51 @@ class ReservaServiceTest {
         }
 
     }
+
+    @Nested
+    @DisplayName("Operaciones de Cancelación")
+    class CancelacionTests {
+
+        @Test
+        @DisplayName("Debe cancelar exitosamente cuando la reserva existe")
+        void debeCancelarReservaExitosamente() {
+            // Arrange
+            UUID reservaId = UUID.randomUUID();
+            Cliente cliente = new Cliente("Daniel Romero", "daniel@correo.com");
+            Habitacion habitacion = new HabitacionEstandar("202", 2, 180.0, 1);
+            RangoFechas fechas = new RangoFechas(
+                    LocalDateTime.now().plusDays(2),
+                    LocalDateTime.now().plusDays(5));
+            Reserva reservaExistente = new Reserva(cliente, habitacion, fechas);
+            reservaExistente.confirmar(); // Pasa a CONFIRMADA
+
+            ReservaResponse responseEsperado = new ReservaResponse(
+                    reservaId,
+                    "Daniel Romero",
+                    "202",
+                    fechas.fechaInicio(),
+                    fechas.fechaFin(),
+                    540.0,
+                    "CANCELADA");
+
+            // Stubs
+            when(reservaRepository.findById(reservaId)).thenReturn(Optional.of(reservaExistente));
+            when(reservaRepository.save(any(Reserva.class))).thenAnswer(invocation -> invocation.getArgument(0));
+            when(reservaMapper.toResponse(any(Reserva.class))).thenReturn(responseEsperado);
+
+            // Act
+            ReservaResponse resultado = reservaService.cancelar(reservaId);
+
+            // Assert
+            assertNotNull(resultado);
+            assertEquals("CANCELADA", resultado.estado());
+            assertEquals(EstadoReserva.CANCELADA, reservaExistente.getEstado());
+            assertEquals(EstadoHabitacion.DISPONIBLE, habitacion.getEstado());
+
+            // Verificación de comportamiento (Mocks)
+            verify(reservaRepository, times(1)).findById(reservaId);
+            verify(reservaRepository, times(1)).save(reservaExistente);
+            verify(reservaMapper, times(1)).toResponse(reservaExistente);
+        }
+    }
 }
