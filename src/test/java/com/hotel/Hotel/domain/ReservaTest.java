@@ -50,4 +50,23 @@ class ReservaTest {
         assertEquals(EstadoReserva.CANCELADA, reserva.getEstado());
         assertEquals(EstadoHabitacion.DISPONIBLE, habitacion.getEstado());
     }
+
+    @Test
+    @DisplayName("Debe calcular el costo total correctamente según el precio por noche y los días de estadía")
+    void debeCalcularCostoTotalCorrectamenteAlCrearReserva() {
+        // Arrange
+        Cliente cliente = new Cliente("Lucía Méndez", "lucia@correo.com");
+        Habitacion habitacion = new HabitacionEstandar("103", 2, 150.0, 1);
+        LocalDateTime inicio = LocalDateTime.now().plusDays(1);
+        LocalDateTime fin = inicio.plusDays(3); // 3 días de estadía
+        RangoFechas periodo = new RangoFechas(inicio, fin);
+
+        // Act
+        Reserva reserva = new Reserva(cliente, habitacion, periodo);
+
+        // Assert
+        // 150.0 * 3 días = 450.0
+        assertEquals(450.0, reserva.getCostoTotal(), 0.001);
+        assertEquals(EstadoReserva.PENDIENTE, reserva.getEstado());
+    }
 }
