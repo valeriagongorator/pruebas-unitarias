@@ -78,5 +78,25 @@ class ReservaServiceTest {
             verify(reservaMapper, times(1)).toResponse(reservaExistente);
         }
 
+        @Test
+        @DisplayName("Debe lanzar IllegalArgumentException cuando la reserva no existe al confirmar")
+        void debeLanzarExcepcionCuandoReservaNoExisteAlConfirmar() {
+            // Arrange
+            UUID reservaIdInexistente = UUID.randomUUID();
+            when(reservaRepository.findById(reservaIdInexistente)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            IllegalArgumentException exception = assertThrows(
+                    IllegalArgumentException.class,
+                    () -> reservaService.confirmar(reservaIdInexistente));
+
+            assertEquals("Reserva no encontrada", exception.getMessage());
+
+            // Verificación de comportamiento (Mocks)
+            verify(reservaRepository, times(1)).findById(reservaIdInexistente);
+            verify(reservaRepository, never()).save(any());
+            verify(reservaMapper, never()).toResponse(any());
+        }
+
     }
 }
