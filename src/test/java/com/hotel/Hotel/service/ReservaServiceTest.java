@@ -1,9 +1,13 @@
 package com.hotel.Hotel.service;
 
 import com.hotel.Hotel.domain.*;
+import com.hotel.Hotel.dto.request.CrearReservaRequest;
 import com.hotel.Hotel.dto.response.ReservaResponse;
 import com.hotel.Hotel.exception.RecursoNoEncontradoException;
+import com.hotel.Hotel.exception.ReglaNegocioException;
 import com.hotel.Hotel.mapper.ReservaMapper;
+import com.hotel.Hotel.repository.ClienteRepository;
+import com.hotel.Hotel.repository.HabitacionRepository;
 import com.hotel.Hotel.repository.ReservaRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,6 +30,12 @@ class ReservaServiceTest {
 
     @Mock
     private ReservaRepository reservaRepository;
+
+    @Mock
+    private ClienteRepository clienteRepository;
+
+    @Mock
+    private HabitacionRepository habitacionRepository;
 
     @Mock
     private ReservaMapper reservaMapper;
@@ -144,6 +154,37 @@ class ReservaServiceTest {
             verify(reservaRepository, times(1)).findById(reservaId);
             verify(reservaRepository, times(1)).save(reservaExistente);
             verify(reservaMapper, times(1)).toResponse(reservaExistente);
+        }
+    }
+
+    @Nested
+    @DisplayName("Operaciones de Creación")
+    class CreacionTests {
+
+        @Test
+        @DisplayName("Debe lanzar ReglaNegocioException cuando la fecha de salida es anterior a la fecha de entrada")
+        void debeLanzarReglaNegocioExceptionCuandoFechaFinEsAnteriorAFechaInicio() {
+            // Arrange
+            LocalDateTime fechaInicio = LocalDateTime.now().plusDays(5);
+            LocalDateTime fechaFin = LocalDateTime.now().plusDays(2); // Salida antes de entrada
+            CrearReservaRequest request = new CrearReservaRequest(
+                    UUID.randomUUID(),
+                    UUID.randomUUID(),
+                    fechaInicio,
+                    fechaFin);
+
+            // Act & Assert
+            ReglaNegocioException exception = assertThrows(
+                    ReglaNegocioException.class,
+                    () -> reservaService.crear(request));
+
+            assertEquals("La fecha de salida no puede ser anterior a la fecha de entrada.", exception.getMessage());
+
+            // Verificación de comportamiento (Mocks)
+            verifyNoInteractions(clienteRepository);
+            verifyNoInteractions(habitacionRepository);
+            verifyNoInteractions(reservaRepository);
+            verifyNoInteractions(reservaMapper);
         }
     }
 }
