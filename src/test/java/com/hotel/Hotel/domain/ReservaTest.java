@@ -30,4 +30,24 @@ class ReservaTest {
         assertEquals(EstadoReserva.CONFIRMADA, reserva.getEstado());
         assertEquals(EstadoHabitacion.OCUPADA, habitacion.getEstado());
     }
+
+    @Test
+    @DisplayName("Debe cancelar una reserva y liberar la habitación a estado DISPONIBLE")
+    void debeCancelarReservaYLiberarHabitacion() {
+        // Arrange
+        Cliente cliente = new Cliente("Beatriz Morales", "beatriz@correo.com");
+        Habitacion habitacion = new HabitacionEstandar("102", 2, 120.0, 1);
+        RangoFechas periodo = new RangoFechas(
+                LocalDateTime.now().plusDays(2),
+                LocalDateTime.now().plusDays(5));
+        Reserva reserva = new Reserva(cliente, habitacion, periodo);
+        reserva.confirmar(); // La confirmamos previamente para que la habitación esté OCUPADA
+
+        // Act
+        reserva.cancelar();
+
+        // Assert
+        assertEquals(EstadoReserva.CANCELADA, reserva.getEstado());
+        assertEquals(EstadoHabitacion.DISPONIBLE, habitacion.getEstado());
+    }
 }
